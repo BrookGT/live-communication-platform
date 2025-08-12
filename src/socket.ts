@@ -16,6 +16,7 @@ export function setupSocket(server: httpServer) {
         console.log("A user connected:", socket.id);
 
         socket.on("join", (room: string) => {
+            console.log("join", room);
             if (!peerSockets.has(room)) {
                 peerSockets.set(room, { peer1: socket });
                 lookup.set(socket.id, room); // Store the room for this socket

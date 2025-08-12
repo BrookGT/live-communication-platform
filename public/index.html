@@ -24,7 +24,7 @@
       }
     </script>
   </head>
-  <body class="text-gray-200 min-h-screen font-sans" style="background-image: url('https://img.freepik.com/free-photo/armchair-green-living-room-with-copy-space_43614-910.jpg'); background-size: cover; background-position: center; background-attachment: fixed;">
+  <body class="text-gray-200 min-h-screen font-sans" style="background-image: url('https://img.freepik.com/premium-photo/armchair-green-living-room-plants_43614-670.jpg'); background-size: cover; background-position: center; background-attachment: fixed;">
     <!-- Background overlay for better readability -->
     <div class="fixed inset-0 bg-black/10 z-0"></div>
     <div class="container mx-auto px-6 py-8 max-w-6xl relative z-10">
@@ -35,7 +35,7 @@
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-end">
           <!-- Peer ID -->
           <div>
-            <label class="block text-sm font-medium text-gray-300 mb-2">Peer ID</label>
+            <label class="block text-sm font-medium text-gray-300 mb-2">Room ID</label>
             <input 
               type="text" 
               placeholder="Enter peer's socket ID" 
@@ -48,10 +48,8 @@
           <div>
             <button 
               class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg"
-              id="connectionBtn"
-              onclick="toggleConnection()"
-            >
-              WAITING FOR CONNECTION
+              id="connectionBtn">
+              Connect
             </button>
           </div>
         </div>
@@ -70,8 +68,8 @@
               </div>
             </div>
                          <div class="bg-white/20 backdrop-blur-md rounded-xl h-80 flex items-center justify-center border-2 border-dashed border-white/30 relative overflow-hidden p-4">
-               <video id="remoteVideo" autoplay playsinline class="w-full h-full object-cover rounded-lg"></video>
-               <div class="absolute inset-0 flex items-center justify-center bg-white/20 backdrop-blur-md p-4" id="remoteVideoPlaceholder">
+               <video id="remoteVideo" autoplay playsinline class="w-full h-full object-cover rounded-lg hidden"></video>
+               <div class="flex items-center justify-center bg-white/20 backdrop-blur-md p-4" id="remoteVideoPlaceholder">
                  <div class="text-center text-gray-300">
                    <i class="fas fa-user-friends text-6xl mb-4 text-white"></i>
                    <p class="text-lg font-medium text-white mb-2">Waiting for peer to connect...</p>
@@ -88,8 +86,8 @@
            <div class="bg-white/20 backdrop-blur-md rounded-2xl p-6 border border-white/30 h-auto shadow-xl">
             <h3 class="text-lg font-semibold text-gray-200 mb-4">You</h3>
                          <div class="bg-white/20 backdrop-blur-md rounded-xl h-80 flex items-center justify-center border-2 border-dashed border-white/30 relative overflow-hidden p-4">
-               <video id="localVideo" autoplay playsinline muted class="w-full h-full object-cover rounded-lg"></video>
-               <div class="absolute inset-0 flex items-center justify-center bg-white/20 backdrop-blur-md p-4" id="localVideoPlaceholder">
+               <video id="localVideo" autoplay playsinline muted class="w-full h-full object-cover rounded-lg hidden"></video>
+               <div class="flex items-center justify-center bg-white/20 backdrop-blur-md p-4" id="localVideoPlaceholder">
                  <div class="text-center text-gray-300">
                    <i class="fas fa-user text-6xl mb-4 text-white"></i>
                    <p class="text-lg font-medium text-white mb-2">Your camera</p>
@@ -144,6 +142,75 @@
     </div>
 
 
-    <script src="js/app.js"></script>
-  </body>
-</html>
+         <script>
+       // Function to show remote video and hide placeholder
+       function showRemoteVideo() {
+         const remoteVideo = document.getElementById('remoteVideo');
+         const remotePlaceholder = document.getElementById('remoteVideoPlaceholder');
+         
+         if (remoteVideo && remotePlaceholder) {
+           remoteVideo.classList.remove('hidden');
+           remotePlaceholder.classList.add('hidden');
+         }
+       }
+       
+       // Function to show local video and hide placeholder
+       function showLocalVideo() {
+         const localVideo = document.getElementById('localVideo');
+         const localPlaceholder = document.getElementById('localVideoPlaceholder');
+         
+         if (localVideo && localPlaceholder) {
+           localVideo.classList.remove('hidden');
+           localPlaceholder.classList.add('hidden');
+         }
+       }
+       
+       // Function to hide remote video and show placeholder
+       function hideRemoteVideo() {
+         const remoteVideo = document.getElementById('remoteVideo');
+         const remotePlaceholder = document.getElementById('remoteVideoPlaceholder');
+         
+         if (remoteVideo && remotePlaceholder) {
+           remoteVideo.classList.add('hidden');
+           remotePlaceholder.classList.remove('hidden');
+         }
+       }
+       
+       // Function to hide local video and show placeholder
+       function hideLocalVideo() {
+         const localVideo = document.getElementById('localVideo');
+         const localPlaceholder = document.getElementById('localVideoPlaceholder');
+         
+         if (localVideo && localPlaceholder) {
+           localVideo.classList.add('hidden');
+           localPlaceholder.classList.remove('hidden');
+         }
+       }
+       
+       // Initialize camera and show local video when page loads
+       async function initializeCamera() {
+         try {
+           const stream = await navigator.mediaDevices.getUserMedia({ 
+             video: true, 
+             audio: true 
+           });
+           
+           const localVideo = document.getElementById('localVideo');
+           if (localVideo) {
+             localVideo.srcObject = stream;
+             // Show local video after a short delay to ensure stream is ready
+             setTimeout(showLocalVideo, 1000);
+           }
+           
+           console.log('Camera initialized successfully');
+         } catch (error) {
+           console.error('Error accessing camera:', error);
+         }
+       }
+       
+       // Initialize camera when page loads
+       document.addEventListener('DOMContentLoaded', initializeCamera);
+     </script>
+     <script src="js/app.js"></script>
+   </body>
+ </html>
