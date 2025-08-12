@@ -1,6 +1,10 @@
 import { createServer } from "http";
 import app from "./app";
 import { setupSocket } from "./socket";
+import * as dotenv from 'dotenv';
+
+// Load environment variables from .env
+dotenv.config();
 
 const server = createServer(app);
 setupSocket(server);
