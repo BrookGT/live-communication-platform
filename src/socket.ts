@@ -12,6 +12,16 @@ export function setupSocket(server: httpServer) {
             io.emit("message", msg); // Broadcast the message to all connected clients
         });
 
+        socket.on("offer", (offer: string) => {
+            console.log("Offer received:", offer);
+            socket.broadcast.emit("offer", offer); // Broadcast the offer to all other clients
+        });
+
+        socket.on("candidate", (candidate: string) => {
+            console.log("Candidate received:", socket.id, candidate);
+            socket.broadcast.emit("candidate", candidate); // Broadcast the ICE candidate to all other clients
+        });
+
         socket.on("disconnect", () => {
             console.log("User disconnected:", socket.id);
         });
