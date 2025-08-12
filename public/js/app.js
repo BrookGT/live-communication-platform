@@ -10,7 +10,8 @@ const remoteVideo = document.getElementById("remoteVideo");
 
 disableButtons();
 
-const socket = io("ws://127.0.0.1:3000");
+// Prefer same-origin Socket.IO connection so protocol/host/port match (avoids mixed content and cert mismatch)
+const socket = io();
 let stream;
 let isStarted = false;
 let peerConnection = new RTCPeerConnection({
