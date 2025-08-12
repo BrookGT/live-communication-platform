@@ -26,6 +26,23 @@ socket.on("connect", () => {
   startButton.disabled = false;
 });
 
+socket.on("candidate", (candidate) => {
+  console.log("on candidate", candidate);
+  peerConnection
+    .addIceCandidate(new RTCIceCandidate(candidate))
+    .then((state) => {})
+    .catch((error) => {});
+});
+
+socket.on("join", async (candidate) => {
+  console.log("on candidate", candidate);
+  await startWebRTC();
+});
+
+async function createRoom(roomId) {
+  socket.emit("join", roomId);
+}
+
 async function startWebRTC() {
   const stream = await navigator.mediaDevices.getUserMedia({
     audio: true,
