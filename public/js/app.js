@@ -1,8 +1,14 @@
 console.log("Live Communication Platform");
 const startButton = document.getElementById("startButton");
 const stopButton = document.getElementById("stopButton");
+const muteButton = document.getElementById("muteButton");
+const unmuteButton = document.getElementById("unmuteButton");
+const hangupButton = document.getElementById("hangupButton");
+
 const localVideo = document.getElementById("localVideo");
 const remoteVideo = document.getElementById("remoteVideo");
+
+disableButtons();
 
 const socket = io("ws://127.0.0.1:3000");
 const peerConnection = new RTCPeerConnection({
@@ -17,6 +23,7 @@ const peerConnection = new RTCPeerConnection({
 
 socket.on("connect", () => {
   console.log("Connected to server", socket.id);
+  startButton.disabled = false;
 });
 
 async function startWebRTC() {
@@ -30,7 +37,14 @@ async function startWebRTC() {
     if (track.kind === "video") {
       localVideo.srcObject = stream;
     }
-    // pc.addTrack(track, stream);
+    peerConnection.addTrack(track, stream);
+  });
+
+  // Create offer
+  peerConnection.createOffer().then((offer) => {
+    console.log("offer", offer);
+    peerConnection.setLocalDescription(offer);
+    socket.emit("offer", { type: offer.type, sdp: offer.sdp });
   });
 
   peerConnection.ontrack = (event) => {
@@ -51,6 +65,14 @@ async function startWebRTC() {
 
   peerConnection.onicecandidate = (event) => {
     console.log("ICE Candidate", event);
+    if (event.candidate) {
+      console.log("candidate", event.candidate);
+      socket.emit("candidate", {
+        candidate: event.candidate.candidate,
+        sdpMid: "0",
+        sdpMLineIndex: 0,
+      });
+    }
   };
 
   peerConnection.oniceconnectionstatechange = (event) => {
@@ -61,3 +83,19 @@ async function startWebRTC() {
 startButton.addEventListener("click", async () => {
   startWebRTC();
 });
+
+function disableButtons() {
+  startButton.disabled = true;
+  stopButton.disabled = true;
+  muteButton.disabled = true;
+  unmuteButton.disabled = true;
+  hangupButton.disabled = true;
+}
+
+function enableButtons() {
+  startButton.disabled = false;
+  stopButton.disabled = true;
+  muteButton.disabled = false;
+  unmuteButton.disabled = false;
+  hangupButton.disabled = false;
+}
