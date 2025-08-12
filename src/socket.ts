@@ -24,6 +24,8 @@ export function setupSocket(server: httpServer) {
                 if (currentPeers?.peer1 && !currentPeers.peer2) {
                     currentPeers.peer2 = socket; // Assign the second peer
                     lookup.set(socket.id, room); // Store the room for this socket
+                    currentPeers.peer1.emit("join", socket.id); // Notify peer1 that peer2 has joined
+                    console.log(`Peer2 joined room: ${room}`);
                 } else {
                     console.log(
                         `Room ${room} is already full or has two peers.`
