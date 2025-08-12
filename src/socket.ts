@@ -7,6 +7,11 @@ export function setupSocket(server: httpServer) {
     io.on("connection", (socket: Socket) => {
         console.log("A user connected:", socket.id);
 
+        socket.on("join", (room: string) => {
+            console.log(`User ${socket.id} joined room: ${room}`);
+            socket.join(room);
+        });
+
         socket.on("message", (msg: string) => {
             console.log("Message received:", msg);
             io.emit("message", msg); // Broadcast the message to all connected clients
