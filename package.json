@@ -16,5 +16,12 @@
     "url": "https://github.com/BrookGT/live-communication-platform/issues"
   },
   "homepage": "https://github.com/BrookGT/live-communication-platform#readme",
-  "description": ""
+  "description": "",
+  "dependencies": {
+    "express": "^5.1.0",
+    "nodemon": "^3.1.10"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.3"
+  }
 }
