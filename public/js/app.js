@@ -1,5 +1,5 @@
 console.log("Live Communication Platform");
-const startButton = document.getElementById("startButton");
+const startButton = document.getElementById("connectionBtn");
 const stopButton = document.getElementById("stopButton");
 const localVideo = document.getElementById("localVideo");
 const remoteVideo = document.getElementById("remoteVideo");

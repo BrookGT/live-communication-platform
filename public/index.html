@@ -3,24 +3,246 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Live Communication Platform</title>
-    <link rel="stylesheet" , href="./css/style.css" />
+    <title>Gluon Call</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              'gluon-purple': '#6366f1',
+              'gluon-dark': '#1e1b4b',
+              'gluon-darker': '#0f0f23',
+              'gluon-light': '#a5b4fc',
+              'gluon-grey': '#6b7280'
+            }
+          }
+        }
+      }
+    </script>
   </head>
-  <body>
-    <h1>Live Communication Platform</h1>
-    <div>
-      <div>
-        <button id="startButton">Start</button>
-        <button id="stopButton">Stop</button>
-        <button id="muteButton">Mute</button>
-        <button id="unmuteButton">Unmute</button>
-        <button id="hangupButton">Hangup</button>
+  <body class="bg-gradient-to-b from-gluon-darker via-gluon-dark to-purple-900 text-gray-200 min-h-screen font-sans">
+    <div class="container mx-auto px-6 py-8 max-w-6xl">
+      
+
+      <!-- ID and Connection Section -->
+      <div class="bg-white/5 backdrop-blur-sm rounded-2xl p-8 mb-8 border border-white/10">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-end">
+          <!-- Peer ID -->
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-2">Peer ID</label>
+            <input 
+              type="text" 
+              placeholder="Enter peer's socket ID" 
+              class="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gluon-purple focus:border-transparent"
+              id="peerIdInput"
+            >
+          </div>
+
+          <!-- Connection Button -->
+          <div>
+            <button 
+              class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg"
+              id="connectionBtn"
+              onclick="toggleConnection()"
+            >
+              WAITING FOR CONNECTION
+            </button>
+          </div>
+        </div>
       </div>
-      <div>
-        <video id="localVideo" autoplay playsinline></video>
-        <video id="remoteVideo" autoplay playsinline></video>
+
+      <!-- Video Display Areas -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Remote Video -->
+        <div class="lg:col-span-2">
+          <div class="bg-gray-800/50 rounded-2xl p-6 border border-white/10 h-96 relative">
+            <div class="flex justify-between items-start mb-4">
+              <h3 class="text-lg font-semibold text-gray-200">Remote Video</h3>
+              <div class="flex items-center gap-2 text-red-400">
+                <i class="fas fa-video-slash"></i>
+                <span class="text-sm">Not Connected</span>
+              </div>
+            </div>
+            <div class="bg-black/30 rounded-xl h-80 flex items-center justify-center border-2 border-dashed border-gray-600 relative overflow-hidden">
+              <video id="remoteVideo" autoplay playsinline class="w-full h-full object-cover rounded-lg"></video>
+              <div class="absolute inset-0 flex items-center justify-center bg-black/50" id="remoteVideoPlaceholder">
+                <div class="text-center text-gray-400">
+                  <i class="fas fa-user-friends text-6xl mb-4"></i>
+                  <p class="text-lg">Waiting for peer to connect...</p>
+                  <p class="text-sm text-gray-500 mt-2">Share your ID with someone to start a call</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+        </div>
+
+        <!-- Your Video -->
+        <div class="lg:col-span-1">
+          <div class="bg-gray-800/50 rounded-2xl p-6 border border-white/10 h-96">
+            <h3 class="text-lg font-semibold text-gray-200 mb-4">You</h3>
+            <div class="bg-black/30 rounded-xl h-80 flex items-center justify-center border-2 border-dashed border-gray-600 relative overflow-hidden">
+              <video id="localVideo" autoplay playsinline muted class="w-full h-full object-cover rounded-lg"></video>
+              <div class="absolute inset-0 flex items-center justify-center bg-black/50" id="localVideoPlaceholder">
+                <div class="text-center text-gray-400">
+                  <i class="fas fa-user text-6xl mb-4"></i>
+                  <p class="text-lg">Your camera</p>
+                  <p class="text-sm text-gray-500 mt-2">Click to enable camera</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+        </div>
+      </div>
+
+      <!-- Call Controls -->
+      <div class="flex justify-center mt-8">
+        <div class="flex gap-6">
+          <!-- Microphone Button -->
+          <button 
+            class="w-16 h-16 bg-gluon-purple hover:bg-purple-600 text-white rounded-full flex items-center justify-center transition-all duration-200 transform hover:scale-110 shadow-lg"
+            id="micBtn"
+            onclick="toggleMicrophone()"
+          >
+            <i class="fas fa-microphone text-xl"></i>
+          </button>
+
+          <!-- Video Button -->
+          <button 
+            class="w-16 h-16 bg-gluon-purple hover:bg-purple-600 text-white rounded-full flex items-center justify-center transition-all duration-200 transform hover:scale-110 shadow-lg"
+            id="videoBtn"
+            onclick="toggleVideo()"
+          >
+            <i class="fas fa-video text-xl"></i>
+          </button>
+
+          <!-- Hangup Button -->
+          <button 
+            class="w-16 h-16 bg-red-600 hover:bg-red-700 text-white rounded-full flex items-center justify-center transition-all duration-200 transform hover:scale-110 shadow-lg"
+            onclick="hangup()"
+          >
+            <i class="fas fa-phone-slash text-xl"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Connection Status -->
+      <div class="mt-8 text-center">
+        <div class="inline-flex items-center gap-2 bg-white/5 backdrop-blur-sm rounded-full px-6 py-3 border border-white/10">
+          <div class="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></div>
+          <span class="text-sm text-gray-300">Ready to connect</span>
+        </div>
       </div>
     </div>
+
+
+         <script>
+       // Simple JavaScript for UI interactions
+       
+       // Initialize camera access
+       async function initializeCamera() {
+         try {
+           const stream = await navigator.mediaDevices.getUserMedia({ 
+             video: true, 
+             audio: true 
+           });
+           
+           const localVideo = document.getElementById('localVideo');
+           localVideo.srcObject = stream;
+           
+           // Hide placeholder when video starts
+           const placeholder = document.getElementById('localVideoPlaceholder');
+           placeholder.style.display = 'none';
+           
+           console.log('Camera initialized successfully');
+         } catch (error) {
+           console.error('Error accessing camera:', error);
+         }
+       }
+       
+       // Initialize camera when page loads
+       document.addEventListener('DOMContentLoaded', initializeCamera);
+
+      function toggleConnection() {
+        const btn = document.getElementById('connectionBtn');
+        const peerInput = document.getElementById('peerIdInput');
+        
+        if (btn.textContent === 'WAITING FOR CONNECTION') {
+          if (peerInput.value.trim()) {
+            btn.textContent = 'CONNECTING...';
+            btn.classList.remove('bg-green-600', 'hover:bg-green-700');
+            btn.classList.add('bg-yellow-600', 'hover:bg-yellow-700');
+            
+            // Simulate connection
+            setTimeout(() => {
+              btn.textContent = 'CONNECTED';
+              btn.classList.remove('bg-yellow-600', 'hover:bg-yellow-700');
+              btn.classList.add('bg-red-600', 'hover:bg-red-700');
+            }, 2000);
+          } else {
+            alert('Please enter a Peer ID to connect');
+          }
+        } else if (btn.textContent === 'CONNECTED') {
+          btn.textContent = 'WAITING FOR CONNECTION';
+          btn.classList.remove('bg-red-600', 'hover:bg-red-700');
+          btn.classList.add('bg-green-600', 'hover:bg-green-700');
+        }
+      }
+
+      function toggleMicrophone() {
+        const btn = document.getElementById('micBtn');
+        const icon = btn.querySelector('i');
+        
+        if (icon.classList.contains('fa-microphone')) {
+          icon.classList.remove('fa-microphone');
+          icon.classList.add('fa-microphone-slash');
+          btn.classList.add('bg-red-600', 'hover:bg-red-700');
+          btn.classList.remove('bg-gluon-purple', 'hover:bg-purple-600');
+        } else {
+          icon.classList.remove('fa-microphone-slash');
+          icon.classList.add('fa-microphone');
+          btn.classList.remove('bg-red-600', 'hover:bg-red-700');
+          btn.classList.add('bg-gluon-purple', 'hover:bg-purple-600');
+        }
+      }
+
+      function toggleVideo() {
+        const btn = document.getElementById('videoBtn');
+        const icon = btn.querySelector('i');
+        
+        if (icon.classList.contains('fa-video')) {
+          icon.classList.remove('fa-video');
+          icon.classList.add('fa-video-slash');
+          btn.classList.add('bg-red-600', 'hover:bg-red-700');
+          btn.classList.remove('bg-gluon-purple', 'hover:bg-purple-600');
+        } else {
+          icon.classList.remove('fa-video-slash');
+          icon.classList.add('fa-video');
+          btn.classList.remove('bg-red-600', 'hover:bg-red-700');
+          btn.classList.add('bg-gluon-purple', 'hover:bg-purple-600');
+        }
+      }
+
+      function hangup() {
+        const btn = document.getElementById('connectionBtn');
+        btn.textContent = 'WAITING FOR CONNECTION';
+        btn.classList.remove('bg-red-600', 'hover:bg-red-700', 'bg-yellow-600', 'hover:bg-yellow-700');
+        btn.classList.add('bg-green-600', 'hover:bg-green-700');
+        
+        // Reset video buttons
+        const micBtn = document.getElementById('micBtn');
+        const videoBtn = document.getElementById('videoBtn');
+        
+        micBtn.querySelector('i').className = 'fas fa-microphone';
+        micBtn.className = 'w-16 h-16 bg-gluon-purple hover:bg-purple-600 text-white rounded-full flex items-center justify-center transition-all duration-200 transform hover:scale-110 shadow-lg';
+        
+        videoBtn.querySelector('i').className = 'fas fa-video';
+        videoBtn.className = 'w-16 h-16 bg-gluon-purple hover:bg-purple-600 text-white rounded-full flex items-center justify-center transition-all duration-200 transform hover:scale-110 shadow-lg';
+      }
+    </script>
+    <script src="js/app.js"></script>
   </body>
-  <script src="js/app.js"></script>
 </html>
