@@ -1,8 +1,9 @@
 import { createServer } from "http";
 import app from "./app";
+import { setupSocket } from "./socket";
 
 const server = createServer(app);
-
+setupSocket(server);
 server.listen(3000, () => {
-  console.log("Server is running on port 3000");
+    console.log("Server is running on port 3000");
 });
