@@ -42,12 +42,28 @@ export function setupSocket(server: httpServer) {
 
         socket.on("offer", (offer: string) => {
             console.log("Offer received:", offer);
-            socket.broadcast.emit("offer", offer); // Broadcast the offer to all other clients
+            const room = lookup.get(socket.id);
+            if (room) {
+                const currentPeers = peerSockets.get(room);
+                if (currentPeers?.peer2?.id === socket.id) {
+                    currentPeers.peer1?.emit("offer", offer);
+                } else if (currentPeers?.peer1?.id === socket.id) {
+                    currentPeers.peer2?.emit("offer", offer);
+                }
+            }
         });
 
         socket.on("candidate", (candidate: string) => {
             console.log("Candidate received:", socket.id, candidate);
-            socket.broadcast.emit("candidate", candidate); // Broadcast the ICE candidate to all other clients
+            const room = lookup.get(socket.id);
+            if (room) {
+                const currentPeers = peerSockets.get(room);
+                if (currentPeers?.peer2?.id === socket.id) {
+                    currentPeers.peer1?.emit("candidate", candidate);
+                } else if (currentPeers?.peer1?.id === socket.id) {
+                    currentPeers.peer2?.emit("candidate", candidate);
+                }
+            }
         });
 
         socket.on("disconnect", () => {
@@ -63,7 +79,7 @@ export function setupSocket(server: httpServer) {
                         );
                         peerSockets.delete(room); // Remove the room if peer1 disconnects
                         lookup.delete(socket.id); // Remove the socket from the lookup
-                        lookup.delete(currentPeers.peer2?.id); // Remove peer2 from lookup if it exists
+                        lookup.delete(currentPeers.peer2?.id || ""); // Remove peer2 from lookup if it exists
                         io.to(room).emit("roomClosed", room); // Notify remaining peer that the room is closed
                         console.log(
                             `Room ${room} removed due to peer1 disconnection.`
