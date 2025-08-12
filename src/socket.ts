@@ -1,13 +1,36 @@
 import { Server, Socket } from "socket.io";
 import { Server as httpServer } from "http";
 
+interface PeerSocket {
+    peer1?: Socket;
+    peer2?: Socket;
+}
+
 export function setupSocket(server: httpServer) {
     const io = new Server(server);
+
+    const peerSockets: Map<string, PeerSocket> = new Map();
+    const lookup: Map<string, string> = new Map();
 
     io.on("connection", (socket: Socket) => {
         console.log("A user connected:", socket.id);
 
         socket.on("join", (room: string) => {
+            if (!peerSockets.has(room)) {
+                peerSockets.set(room, { peer1: socket });
+                lookup.set(socket.id, room); // Store the room for this socket
+            } else {
+                const currentPeers = peerSockets.get(room);
+                if (currentPeers?.peer1 && !currentPeers.peer2) {
+                    currentPeers.peer2 = socket; // Assign the second peer
+                    lookup.set(socket.id, room); // Store the room for this socket
+                } else {
+                    console.log(
+                        `Room ${room} is already full or has two peers.`
+                    );
+                    socket.emit("roomFull", room);
+                }
+            }
             console.log(`User ${socket.id} joined room: ${room}`);
             socket.join(room);
         });
@@ -29,6 +52,28 @@ export function setupSocket(server: httpServer) {
 
         socket.on("disconnect", () => {
             console.log("User disconnected:", socket.id);
+            const room = lookup.get(socket.id);
+            if (room) {
+                const currentPeers = peerSockets.get(room);
+                if (currentPeers) {
+                    if (currentPeers.peer1?.id === socket.id) {
+                        currentPeers.peer2?.emit(
+                            "peerDisconnected",
+                            "Peer1 has disconnected"
+                        );
+                        peerSockets.delete(room); // Remove the room if peer1 disconnects
+                        lookup.delete(socket.id); // Remove the socket from the lookup
+                        lookup.delete(currentPeers.peer2?.id); // Remove peer2 from lookup if it exists
+                        io.to(room).emit("roomClosed", room); // Notify remaining peer that the room is closed
+                        console.log(
+                            `Room ${room} removed due to peer1 disconnection.`
+                        );
+                    } else if (currentPeers.peer2?.id === socket.id) {
+                        currentPeers.peer2 = undefined; // Clear peer2
+                    }
+                }
+                lookup.delete(socket.id); // Remove the socket from the lookup
+            }
         });
     });
 
