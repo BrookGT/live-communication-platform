@@ -142,97 +142,10 @@ startButton.addEventListener("click", async () => {
 
 function disableButtons() {
   startButton.disabled = true;
-  // stopButton.disabled = true;
-  // muteButton.disabled = true;
-  // unmuteButton.disabled = true;
-  // hangupButton.disabled = true;
 }
 
 function enableButtons() {
   startButton.disabled = false;
-  // stopButton.disabled = true;
-  // muteButton.disabled = false;
-  // unmuteButton.disabled = false;
-  // hangupButton.disabled = false;
 }
 
-// Gracefully disconnect the current WebRTC session
-// function disconnectWebRTC() {
-//   try {
-//     // Stop and clear local media
-//     const localStream = localVideo && localVideo.srcObject;
-//     if (localStream && typeof localStream.getTracks === "function") {
-//       localStream.getTracks().forEach((track) => {
-//         try {
-//           track.stop();
-//         } catch (e) {}
-//       });
-//     }
-//     if (localVideo) {
-//       localVideo.srcObject = null;
-//     }
-
-//     // Stop and clear remote media
-//     const remoteStream = remoteVideo && remoteVideo.srcObject;
-//     if (remoteStream && typeof remoteStream.getTracks === "function") {
-//       remoteStream.getTracks().forEach((track) => {
-//         try {
-//           track.stop();
-//         } catch (e) {}
-//       });
-//     }
-//     if (remoteVideo) {
-//       remoteVideo.srcObject = null;
-//     }
-
-//     // Tear down RTCPeerConnection
-//     if (typeof peerConnection !== "undefined" && peerConnection) {
-//       try {
-//         // Stop and remove all senders/tracks
-//         peerConnection.getSenders().forEach((sender) => {
-//           try {
-//             sender.track && sender.track.stop();
-//           } catch (e) {}
-//           try {
-//             peerConnection.removeTrack(sender);
-//           } catch (e) {}
-//         });
-//         // Stop transceivers if supported
-//         if (typeof peerConnection.getTransceivers === "function") {
-//           peerConnection.getTransceivers().forEach((transceiver) => {
-//             try {
-//               transceiver.stop && transceiver.stop();
-//             } catch (e) {}
-//           });
-//         }
-//         // Clear event handlers
-//         peerConnection.ontrack = null;
-//         peerConnection.onicecandidate = null;
-//         peerConnection.oniceconnectionstatechange = null;
-//         peerConnection.onconnectionstatechange = null;
-//         peerConnection.onnegotiationneeded = null;
-//         peerConnection.onsignalingstatechange = null;
-//         // Close the connection
-//         if (peerConnection.signalingState !== "closed") {
-//           peerConnection.close();
-//         }
-//       } catch (err) {
-//         console.error("Error while closing RTCPeerConnection:", err);
-//       }
-//     }
-
-//     // Optionally notify the other side via signaling (no-op if not handled server-side)
-//     try {
-//       socket && socket.emit && socket.emit("hangup");
-//     } catch (e) {}
-
-//     console.log("WebRTC connection disconnected");
-//   } catch (error) {
-//     console.error("Failed to disconnect WebRTC:", error);
-//   }
-// }
-
 initRoom();
-
-// Expose for UI to call (e.g., from a hangup button)
-// window.disconnectWebRTC = disconnectWebRTC;
