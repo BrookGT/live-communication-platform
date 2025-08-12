@@ -12,6 +12,7 @@ disableButtons();
 
 const socket = io("ws://127.0.0.1:3000");
 let stream;
+let isStarted = false;
 let peerConnection = new RTCPeerConnection({
   iceServers: [
     { urls: "stun:stun.l.google.com:19302" },
@@ -27,6 +28,20 @@ socket.on("connect", () => {
   startButton.disabled = false;
 });
 
+socket.on("offer", async (offer) => {
+  console.log("on offer", offer);
+  if (!isStarted) {
+    await startWebRTC();
+  }
+  peerConnection.setRemoteDescription(offer);
+  if (!isStarted) {
+    peerConnection.createAnswer().then((answer) => {
+      peerConnection.setLocalDescription(answer);
+      socket.emit("offer", { type: answer.type, sdp: answer.sdp });
+    });
+  }
+});
+
 socket.on("candidate", (candidate) => {
   console.log("on candidate", candidate);
   peerConnection
@@ -35,9 +50,10 @@ socket.on("candidate", (candidate) => {
     .catch((error) => {});
 });
 
-socket.on("join", async (candidate) => {
-  console.log("on candidate", candidate);
-  await startWebRTC();
+socket.on("join", async (peer) => {
+  console.log("on Join", peer);
+  isStarted = true;
+  await startWebRTC(isStarted);
 });
 
 socket.on("peerDisconnected", (roomId) => {
@@ -48,11 +64,12 @@ async function createRoom(roomId) {
   socket.emit("join", roomId);
 }
 
-async function startWebRTC() {
-  const stream = await navigator.mediaDevices.getUserMedia({
+async function initRoom() {
+  stream = await navigator.mediaDevices.getUserMedia({
     audio: true,
     video: true,
   });
+
   stream.getTracks().forEach((track) => {
     if (track.kind === "video") {
       localVideo.srcObject = stream;
@@ -60,7 +77,7 @@ async function startWebRTC() {
   });
 }
 
-async function startWebRTC() {
+async function startWebRTC(isStarted = false) {
   stream.getTracks().forEach((track) => {
     console.log("Track", track);
     if (track.kind === "video") {
@@ -69,17 +86,20 @@ async function startWebRTC() {
     peerConnection.addTrack(track, stream);
   });
 
-  // Create offer
-  peerConnection.createOffer().then((offer) => {
-    console.log("offer", offer);
-    peerConnection.setLocalDescription(offer);
-    socket.emit("offer", { type: offer.type, sdp: offer.sdp });
-  });
+  if (isStarted) {
+    // Create offer
+    peerConnection.createOffer().then((offer) => {
+      console.log("offer", offer);
+      peerConnection.setLocalDescription(offer);
+      socket.emit("offer", { type: offer.type, sdp: offer.sdp });
+    });
+  }
 
   peerConnection.ontrack = (event) => {
     console.log("ontrack", event);
     event.streams.forEach((stream) => {
       remoteStream = stream;
+      remoteVideo.srcObject = stream;
       stream.getTracks().forEach((track) => {
         track.onended = () => {
           console.log("track ended");
@@ -136,80 +156,82 @@ function enableButtons() {
 }
 
 // Gracefully disconnect the current WebRTC session
-function disconnectWebRTC() {
-  try {
-    // Stop and clear local media
-    const localStream = localVideo && localVideo.srcObject;
-    if (localStream && typeof localStream.getTracks === "function") {
-      localStream.getTracks().forEach((track) => {
-        try {
-          track.stop();
-        } catch (e) {}
-      });
-    }
-    if (localVideo) {
-      localVideo.srcObject = null;
-    }
+// function disconnectWebRTC() {
+//   try {
+//     // Stop and clear local media
+//     const localStream = localVideo && localVideo.srcObject;
+//     if (localStream && typeof localStream.getTracks === "function") {
+//       localStream.getTracks().forEach((track) => {
+//         try {
+//           track.stop();
+//         } catch (e) {}
+//       });
+//     }
+//     if (localVideo) {
+//       localVideo.srcObject = null;
+//     }
 
-    // Stop and clear remote media
-    const remoteStream = remoteVideo && remoteVideo.srcObject;
-    if (remoteStream && typeof remoteStream.getTracks === "function") {
-      remoteStream.getTracks().forEach((track) => {
-        try {
-          track.stop();
-        } catch (e) {}
-      });
-    }
-    if (remoteVideo) {
-      remoteVideo.srcObject = null;
-    }
+//     // Stop and clear remote media
+//     const remoteStream = remoteVideo && remoteVideo.srcObject;
+//     if (remoteStream && typeof remoteStream.getTracks === "function") {
+//       remoteStream.getTracks().forEach((track) => {
+//         try {
+//           track.stop();
+//         } catch (e) {}
+//       });
+//     }
+//     if (remoteVideo) {
+//       remoteVideo.srcObject = null;
+//     }
 
-    // Tear down RTCPeerConnection
-    if (typeof peerConnection !== "undefined" && peerConnection) {
-      try {
-        // Stop and remove all senders/tracks
-        peerConnection.getSenders().forEach((sender) => {
-          try {
-            sender.track && sender.track.stop();
-          } catch (e) {}
-          try {
-            peerConnection.removeTrack(sender);
-          } catch (e) {}
-        });
-        // Stop transceivers if supported
-        if (typeof peerConnection.getTransceivers === "function") {
-          peerConnection.getTransceivers().forEach((transceiver) => {
-            try {
-              transceiver.stop && transceiver.stop();
-            } catch (e) {}
-          });
-        }
-        // Clear event handlers
-        peerConnection.ontrack = null;
-        peerConnection.onicecandidate = null;
-        peerConnection.oniceconnectionstatechange = null;
-        peerConnection.onconnectionstatechange = null;
-        peerConnection.onnegotiationneeded = null;
-        peerConnection.onsignalingstatechange = null;
-        // Close the connection
-        if (peerConnection.signalingState !== "closed") {
-          peerConnection.close();
-        }
-      } catch (err) {
-        console.error("Error while closing RTCPeerConnection:", err);
-      }
-    }
+//     // Tear down RTCPeerConnection
+//     if (typeof peerConnection !== "undefined" && peerConnection) {
+//       try {
+//         // Stop and remove all senders/tracks
+//         peerConnection.getSenders().forEach((sender) => {
+//           try {
+//             sender.track && sender.track.stop();
+//           } catch (e) {}
+//           try {
+//             peerConnection.removeTrack(sender);
+//           } catch (e) {}
+//         });
+//         // Stop transceivers if supported
+//         if (typeof peerConnection.getTransceivers === "function") {
+//           peerConnection.getTransceivers().forEach((transceiver) => {
+//             try {
+//               transceiver.stop && transceiver.stop();
+//             } catch (e) {}
+//           });
+//         }
+//         // Clear event handlers
+//         peerConnection.ontrack = null;
+//         peerConnection.onicecandidate = null;
+//         peerConnection.oniceconnectionstatechange = null;
+//         peerConnection.onconnectionstatechange = null;
+//         peerConnection.onnegotiationneeded = null;
+//         peerConnection.onsignalingstatechange = null;
+//         // Close the connection
+//         if (peerConnection.signalingState !== "closed") {
+//           peerConnection.close();
+//         }
+//       } catch (err) {
+//         console.error("Error while closing RTCPeerConnection:", err);
+//       }
+//     }
 
-    // Optionally notify the other side via signaling (no-op if not handled server-side)
-    try {
-      socket && socket.emit && socket.emit("hangup");
-    } catch (e) {}
+//     // Optionally notify the other side via signaling (no-op if not handled server-side)
+//     try {
+//       socket && socket.emit && socket.emit("hangup");
+//     } catch (e) {}
 
-    console.log("WebRTC connection disconnected");
-  } catch (error) {
-    console.error("Failed to disconnect WebRTC:", error);
-  }
-}
+//     console.log("WebRTC connection disconnected");
+//   } catch (error) {
+//     console.error("Failed to disconnect WebRTC:", error);
+//   }
+// }
+
+initRoom();
 
 // Expose for UI to call (e.g., from a hangup button)
-window.disconnectWebRTC = disconnectWebRTC;
+// window.disconnectWebRTC = disconnectWebRTC;
