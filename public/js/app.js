@@ -1,17 +1,18 @@
 console.log("Live Communication Platform");
 const startButton = document.getElementById("connectionBtn");
+const peerIdInput = document.getElementById("peerIdInput");
 const stopButton = document.getElementById("stopButton");
 const muteButton = document.getElementById("muteButton");
 const unmuteButton = document.getElementById("unmuteButton");
 const hangupButton = document.getElementById("hangupButton");
-
 const localVideo = document.getElementById("localVideo");
 const remoteVideo = document.getElementById("remoteVideo");
 
 disableButtons();
 
 const socket = io("ws://127.0.0.1:3000");
-const peerConnection = new RTCPeerConnection({
+let stream;
+let peerConnection = new RTCPeerConnection({
   iceServers: [
     { urls: "stun:stun.l.google.com:19302" },
     { urls: "stun:freestun.net:3478" },
@@ -26,12 +27,28 @@ socket.on("connect", () => {
   startButton.disabled = false;
 });
 
-async function startWebRTC() {
-  const stream = await navigator.mediaDevices.getUserMedia({
+socket.on("join", async (roomId) => {
+  if (confirm("Someone is trying to connect to you. Do you want to accept?")) {
+    console.log("Confirmed!");
+    await startWebRTC();
+  } else {
+    console.log("Cancelled!");
+  }
+});
+
+async function initRoom() {
+  stream = await navigator.mediaDevices.getUserMedia({
     audio: true,
     video: true,
   });
+  stream.getTracks().forEach((track) => {
+    if (track.kind === "video") {
+      localVideo.srcObject = stream;
+    }
+  });
+}
 
+async function startWebRTC() {
   stream.getTracks().forEach((track) => {
     console.log("Track", track);
     if (track.kind === "video") {
@@ -81,21 +98,29 @@ async function startWebRTC() {
 }
 
 startButton.addEventListener("click", async () => {
-  startWebRTC();
+  if (peerIdInput.value) {
+    socket.emit("join", peerIdInput.value);
+    startButton.disabled = true;
+    startButton.textContent = "Waiting for connection...";
+  } else {
+    alert("Please enter room id");
+  }
 });
 
 function disableButtons() {
   startButton.disabled = true;
-  stopButton.disabled = true;
-  muteButton.disabled = true;
-  unmuteButton.disabled = true;
-  hangupButton.disabled = true;
+  // stopButton.disabled = true;
+  // muteButton.disabled = true;
+  // unmuteButton.disabled = true;
+  // hangupButton.disabled = true;
 }
 
 function enableButtons() {
   startButton.disabled = false;
-  stopButton.disabled = true;
-  muteButton.disabled = false;
-  unmuteButton.disabled = false;
-  hangupButton.disabled = false;
+  // stopButton.disabled = true;
+  // muteButton.disabled = false;
+  // unmuteButton.disabled = false;
+  // hangupButton.disabled = false;
 }
+
+initRoom();
