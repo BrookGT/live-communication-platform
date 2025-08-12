@@ -86,6 +86,11 @@ export function setupSocket(server: httpServer) {
                         );
                     } else if (currentPeers.peer2?.id === socket.id) {
                         currentPeers.peer2 = undefined; // Clear peer2
+                        lookup.delete(socket.id); // Remove the socket from the lookup
+                        currentPeers.peer1?.emit(
+                            "peerDisconnected",
+                            "Peer2 has disconnected"
+                        );
                     }
                 }
                 lookup.delete(socket.id); // Remove the socket from the lookup
